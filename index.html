@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake</title>
+
+  <style>
+    #screen {
+      background: #000;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      image-rendering: -moz-crisp-edges;
+      width: 500px;
+      height: 500px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Snake</h1>
+
+  <canvas id="screen" width="20" height="20"></canvas>
+
+  <br><br>
+  <small>Press the keyboard arrows to move the snake.</small>
+
+
+  <h3>Score: <span id="scoreText">0</span></h3>
+
+  <script>
+    const screen = document.getElementById('screen')
+    const screenSize = screen.height = screen.width
+    const context = screen.getContext('2d')
+    let isGameRunning = false
+
+    function randomNumber() {
+      return Math.floor(Math.random() * screenSize)
+    }
+
+
+    const snake = {
+      color: 'green',
+      x: randomNumber(),
+      y: randomNumber(),
+      body: [],
+      length: 3,
+      speed: {
+        x: 0,
+        y: 0
+      }
+    }
+
+    const apple = {
+      color: 'red',
+      x: 4,
+      y: 4
+    }
+
+    const keydownHandlers = {
+      ArrowLeft() {
+        snake.speed = { x: -1, y: 0 }
+      },
+      ArrowRight() {
+        snake.speed = { x: 1, y: 0 }
+      },
+      ArrowUp() {
+        snake.speed = { x: 0, y: -1 }
+      },
+      ArrowDown() {
+        snake.speed = { x: 0, y: 1 }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeydown)
+
+    renderScreen()
+
+    setInterval(() => {
+      if (isGameRunning) {
+        snakeMovement()
+        detectCollisionWithApple()
+        detectSnakeSelfCollision()
+      }
+    }, 0.2 * 1000)
+
+    function handleKeydown(event) {
+      isGameRunning = true
+      const handlerFunction = keydownHandlers[event.key]
+      if (handlerFunction) handlerFunction()
+    }
+
+    function renderScreen() {
+      context.clearRect(0, 0, screen.width, screen.height)
+
+      renderSnake()
+      renderApple()
+
+      requestAnimationFrame(renderScreen)
+    }
+
+    function renderSnake() {
+      context.fillStyle = snake.color
+
+      if (snake.body.length === 0) {
+        context.fillRect(snake.x, snake.y, 1, 1)
+        return
+      }
+
+      snake.body.forEach(position => {
+        context.fillRect(position.x, position.y, 1, 1)
+      })
+    }
+
+    function renderApple() {
+      context.fillStyle = apple.color
+      context.fillRect(apple.x, apple.y, 1, 1)
+    }
+
+    function snakeMovement() {
+      snake.x += snake.speed.x
+      snake.y += snake.speed.y
+
+      checkSnakePositionLimits()
+
+      snake.body.unshift({ x: snake.x, y: snake.y })
+
+      if (snake.body.length > snake.length) {
+        snake.body.pop()
+      }
+    }
+
+    function checkSnakePositionLimits() {
+      const x = snake.x
+      const y = snake.y
+
+      if (x > screen.width - 1) {
+        snake.x = 0
+        return
+      }
+
+      if (x < 0) {
+        snake.x = screen.width - 1
+        return
+      }
+
+      if (y > screen.height - 1) {
+        snake.y = 0
+        return
+      }
+
+      if (y < 0) {
+        snake.y = screen.height - 1
+        return
+      }
+    }
+
+    function detectCollisionWithApple() {
+      if (snake.x === apple.x && snake.y === apple.y) {
+        apple.x = randomNumber()
+        apple.y = randomNumber()
+        snake.length++
+        updateScore()
+      }
+    }
+
+    function detectSnakeSelfCollision() {
+      const body = [...snake.body]
+      body.shift()
+
+      if (body.find(position => position.x === snake.x && position.y === snake.y)) {
+        isGameRunning = false
+        resetSnake()
+      }
+    }
+
+    function resetSnake() {
+      snake.speed.x = 0
+      snake.speed.y = 0
+      snake.length = 3
+      snake.body = []
+    }
+
+    function updateScore() {
+      const spanEl = document.getElementById('scoreText')
+      spanEl.innerText = snake.length - 3
+    }
+  </script>
+</body>
+
+</html>
